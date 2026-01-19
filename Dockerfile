@@ -10,8 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY app/ ./app/
 
-# Create volume mount point for database
-VOLUME ["/app/data"]
+# Create data directory for database
+RUN mkdir -p /app/data
 
 # Environment variables
 ENV DATABASE_PATH=/app/data/url_monitor.db
