@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  proxy-checker:
+    build: .
+    container_name: proxy-checker
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Папка data будет хранить БД — она сохранится при перезапуске контейнера
+      - ./data:/app/data
+    environment:
+      # ВАЖНО: замени на случайную строку для продакшена!
+      - SECRET_KEY=${SECRET_KEY:-your-super-secret-key-change-me-in-production}
+      - DATABASE_PATH=/app/data/url_monitor.db
+

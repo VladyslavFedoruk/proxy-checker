@@ -1,0 +1,3098 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Monitor — Admin Panel</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-primary: #0a0a0f;
+        --bg-secondary: #12121a;
+        --bg-card: #1a1a24;
+        --bg-card-hover: #22222e;
+        --border: #2a2a3a;
+        --text-primary: #f0f0f5;
+        --text-secondary: #8888a0;
+        --text-muted: #5a5a70;
+        --accent: #6366f1;
+        --accent-hover: #818cf8;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --error: #ef4444;
+        --info: #3b82f6;
+        --gradient-1: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        --gradient-2: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Outfit", sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Background effects */
+      .bg-effects {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      .bg-effects::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+            ellipse at 20% 20%,
+            rgba(99, 102, 241, 0.08) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse at 80% 80%,
+            rgba(168, 85, 247, 0.06) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse at 50% 50%,
+            rgba(14, 165, 233, 0.04) 0%,
+            transparent 60%
+          );
+      }
+
+      .grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+            rgba(99, 102, 241, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+
+      /* Header */
+      header {
+        position: relative;
+        z-index: 10;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(10, 10, 15, 0.8);
+        backdrop-filter: blur(20px);
+      }
+
+      .header-content {
+        max-width: 1600px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .logo-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--gradient-1);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+      }
+
+      .logo h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: var(--gradient-1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Main content */
+      main {
+        position: relative;
+        z-index: 10;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      /* Stats cards */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .stat-card:hover {
+        background: var(--bg-card-hover);
+        transform: translateY(-2px);
+        border-color: var(--accent);
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-value {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 2rem;
+        font-weight: 700;
+      }
+
+      .stat-value.success {
+        color: var(--success);
+      }
+      .stat-value.warning {
+        color: var(--warning);
+      }
+      .stat-value.error {
+        color: var(--error);
+      }
+      .stat-value.info {
+        color: var(--info);
+      }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        gap: 0.3rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1rem;
+      }
+
+      .tab {
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .tab:hover {
+        background: var(--bg-card);
+        color: var(--text-primary);
+      }
+
+      .tab.active {
+        background: var(--accent);
+        color: white;
+      }
+
+      /* Content sections */
+      .section {
+        display: none;
+      }
+
+      .section.active {
+        display: block;
+      }
+
+      /* Cards */
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+
+      .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      /* Buttons */
+      .btn {
+        padding: 0.83rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+       gap: 0.3rem;
+      }
+
+      .btn-primary {
+        background: var(--gradient-1);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+      }
+
+      .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--accent);
+      }
+
+      .btn-icon {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-icon:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
+        border-color: var(--accent);
+      }
+
+      .btn-icon.success:hover {
+        color: var(--success);
+        border-color: var(--success);
+      }
+      .btn-icon.error:hover {
+        color: var(--error);
+        border-color: var(--error);
+      }
+
+ 
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+            align-items: end;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+         gap: 0.3rem;
+      }
+
+      .form-group.full-width {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      input,
+      select,
+      textarea {
+        padding: 0.75rem 1rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+
+      input::placeholder {
+        color: var(--text-muted);
+      }
+
+ 
+      .table-container {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 0.875rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        font-weight: 500;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      tr:hover td {
+        background: var(--bg-card-hover);
+      }
+
+ 
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .status-badge.success {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+      }
+
+      .status-badge.warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+      }
+
+      .status-badge.error {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--error);
+      }
+
+      .status-badge.info {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--info);
+      }
+
+      .status-badge.neutral {
+        background: rgba(136, 136, 160, 0.15);
+        color: var(--text-secondary);
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .geo-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.625rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+      }
+
+ 
+      .redirect-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.5rem;
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 4px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        color: var(--warning);
+        cursor: help;
+      }
+
+      .url-text {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85rem;
+        color: var(--accent-hover);
+        max-width: 400px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .response-time {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      .modal {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      .modal-close {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+      }
+
+      .modal-close:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+      }
+
+      .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+      }
+
+      .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .checkbox {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--accent);
+      }
+
+      .actions {
+        display: flex;
+        gap: 0.3rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-secondary);
+      }
+
+      .empty-state svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+ 
+      .history-list {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .history-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .history-item:last-child {
+        border-bottom: none;
+      }
+
+      .history-time {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+   
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.3s ease forwards;
+      }
+
+ 
+      .toast-container {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1001;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .toast {
+        padding: 1rem 1.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .toast.success {
+        border-color: var(--success);
+      }
+      .toast.error {
+        border-color: var(--error);
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(100px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+ 
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+      }
+
+ 
+      @media (max-width: 768px) {
+        main {
+          padding: 1rem;
+        }
+
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .url-text {
+          max-width: 200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-effects">
+      <div class="grid-pattern"></div>
+    </div>
+
+    <header>
+      <div class="header-content">
+        <div class="logo">
+          <div class="logo-icon">📡</div>
+          <h1>URL Monitor</h1>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <span id="current-user-badge" style="color: var(--text-secondary); font-size: 0.875rem;"></span>
+          <button class="btn btn-secondary" onclick="refreshAll()">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M23 4v6h-6M1 20v-6h6" />
+              <path
+                d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"
+              />
+            </svg>
+            Обновить
+          </button>
+          <button class="btn btn-secondary" onclick="logout()" title="Выйти">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Выйти
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Всего URL</div>
+          <div class="stat-value info" id="stat-total">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Активных</div>
+          <div class="stat-value success" id="stat-active">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Статус 200</div>
+          <div class="stat-value success" id="stat-200">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">С ошибками</div>
+          <div class="stat-value error" id="stat-error">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Прокси</div>
+          <div class="stat-value info" id="stat-proxies">0</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="urls">🔗 URL мониторинг</button>
+        <button class="tab" data-tab="proxies">🌐 Прокси</button>
+        <button class="tab" data-tab="notifications" id="tab-notifications" style="display: none;">🔔 Уведомления</button>
+        <button class="tab" data-tab="users" id="tab-users" style="display: none;">👥 Пользователи</button>
+      </div>
+
+      <!-- URLs Section -->
+      <section id="urls-section" class="section active">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Добавить URL</h2>
+            <button type="button" class="btn btn-secondary" onclick="showCsvImportModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Импорт CSV
+            </button>
+          </div>
+          <form id="url-form" class="form-grid">
+            <div class="form-group full-width">
+              <label for="url-input">URL для мониторинга</label>
+              <input
+                type="url"
+                id="url-input"
+                placeholder="https://example.com/page"
+                required
+              />
+            </div>
+            <div class="form-group full-width">
+              <label for="url-referral">Ресурс основной (опционально)</label>
+              <input
+                type="url"
+                id="url-referral"
+                placeholder="https://site.com/resource"
+              />
+            </div>
+            <div class="form-group">
+              <label for="url-name">Название (опционально)</label>
+              <input type="text" id="url-name" placeholder="Главная страница" />
+            </div>
+            <div class="form-group">
+              <label for="url-proxy">Прокси / Гео</label>
+              <select id="url-proxy">
+                <option value="">Без прокси (напрямую)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="url-interval">Интервал проверки (сек)</label>
+              <input type="number" id="url-interval" value="60" min="10" />
+            </div>
+            <div class="form-group" style="justify-content: flex-end">
+              <button type="submit" class="btn btn-primary">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Добавить URL
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Мониторимые URL</h2>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="geo-filter" style="font-size: 0.875rem; white-space: nowrap;">🌍 Гео:</label>
+                <select id="geo-filter" style="min-width: 120px;" onchange="filterUrlsByGeo()">
+                  <option value="">Все</option>
+                </select>
+              </div>
+              <button class="btn btn-secondary" onclick="checkAllUrls()">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Проверить все
+              </button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL для мониторинга</th>
+                  <th>Ресурс основной</th>
+                  <th>Прокси / Гео</th>
+                  <th>Статус</th>
+                  <th>Редирект</th>
+                  <th>URL редиректа</th>
+                  <th>Время отклика</th>
+                  <th>Последняя проверка</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="urls-table"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="urls-empty" style="display: none">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"
+              />
+              <path
+                d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 10-5.656-5.656l-1.1 1.1"
+              />
+            </svg>
+            <p>Нет URL для мониторинга</p>
+            <p style="font-size: 0.875rem; margin-top: 0.5rem">
+              Добавьте первый URL выше
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Proxies Section -->
+      <section id="proxies-section" class="section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Добавить прокси</h2>
+          </div>
+          <form id="proxy-form" class="form-grid">
+            <div class="form-group">
+              <label for="proxy-name">Название</label>
+              <input
+                type="text"
+                id="proxy-name"
+                placeholder="US Proxy 1"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="proxy-geo">Гео (страна)</label>
+              <input type="text" id="proxy-geo" placeholder="US, DE, RU..." />
+            </div>
+            <div class="form-group">
+              <label for="proxy-protocol">Протокол</label>
+              <select id="proxy-protocol">
+                <option value="http">HTTP</option>
+                <option value="https">HTTPS</option>
+                <option value="socks5">SOCKS5</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="proxy-host">Хост</label>
+              <input
+                type="text"
+                id="proxy-host"
+                placeholder="proxy.example.com"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="proxy-port">Порт</label>
+              <input
+                type="number"
+                id="proxy-port"
+                placeholder="8080"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="proxy-username">Логин (опционально)</label>
+              <input type="text" id="proxy-username" placeholder="username" />
+            </div>
+            <div class="form-group">
+              <label for="proxy-password">Пароль (опционально)</label>
+              <input
+                type="password"
+                id="proxy-password"
+                placeholder="password"
+              />
+            </div>
+            <div class="form-group" style="justify-content: flex-end">
+              <button type="submit" class="btn btn-primary">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Добавить прокси
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Список прокси</h2>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Название</th>
+                  <th>Гео</th>
+                  <th>Адрес</th>
+                  <th>Протокол</th>
+                  <th>Статус</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="proxies-table"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="proxies-empty" style="display: none">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <path
+                d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
+              />
+            </svg>
+            <p>Нет добавленных прокси</p>
+            <p style="font-size: 0.875rem; margin-top: 0.5rem">
+              Добавьте прокси для проверки из разных гео
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notifications Section -->
+      <section id="notifications-section" class="section">
+        <!-- Notification Settings -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">⚙️ Настройки уведомлений</h2>
+          </div>
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <h3
+                style="
+                  color: var(--text-secondary);
+                  font-size: 1rem;
+                  margin-bottom: 0.5rem;
+                "
+              >
+                Когда отправлять уведомления
+              </h3>
+            </div>
+            <div class="form-group">
+              <div class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  id="notify-on-error"
+                  checked
+                />
+                <label for="notify-on-error"
+                  >При ошибках (статус 4xx/5xx)</label
+                >
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  id="notify-on-recovery"
+                  checked
+                />
+                <label for="notify-on-recovery">При восстановлении</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  id="notify-on-status-change"
+                />
+                <label for="notify-on-status-change"
+                  >При любом изменении статуса</label
+                >
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  id="notify-on-every-check"
+                />
+                <label for="notify-on-every-check">При каждой проверке</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Settings -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📧 Email (SMTP)</h2>
+          </div>
+          <form id="smtp-settings-form" class="form-grid">
+            <div class="form-group">
+              <label for="smtp-host">SMTP сервер</label>
+              <input type="text" id="smtp-host" placeholder="smtp.gmail.com" />
+            </div>
+            <div class="form-group">
+              <label for="smtp-port">Порт</label>
+              <input
+                type="number"
+                id="smtp-port"
+                value="587"
+                placeholder="587"
+              />
+            </div>
+            <div class="form-group">
+              <label for="smtp-username">Логин</label>
+              <input
+                type="text"
+                id="smtp-username"
+                placeholder="your@email.com"
+              />
+            </div>
+            <div class="form-group">
+              <label for="smtp-password">Пароль / App Password</label>
+              <input
+                type="password"
+                id="smtp-password"
+                placeholder="••••••••"
+              />
+            </div>
+            <div class="form-group">
+              <label for="smtp-from-email">Email отправителя</label>
+              <input
+                type="email"
+                id="smtp-from-email"
+                placeholder="notifications@example.com"
+              />
+            </div>
+            <div class="form-group">
+              <div class="checkbox-wrapper" style="margin-top: 1.5rem">
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  id="smtp-use-tls"
+                  checked
+                />
+                <label for="smtp-use-tls">Использовать TLS</label>
+              </div>
+            </div>
+            <div
+              class="form-group full-width"
+              style="justify-content: flex-end"
+            >
+              <button type="submit" class="btn btn-primary">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Сохранить настройки SMTP
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Telegram Settings -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📱 Telegram</h2>
+          </div>
+          <form id="telegram-settings-form" class="form-grid">
+            <div class="form-group full-width">
+              <label for="telegram-bot-token">Bot Token</label>
+              <input
+                type="password"
+                id="telegram-bot-token"
+                placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
+              />
+              <small
+                style="
+                  color: var(--text-muted);
+                  margin-top: 0.25rem;
+                  display: block;
+                "
+              >
+                Получите токен у
+                <a
+                  href="https://t.me/BotFather"
+                  target="_blank"
+                  style="color: var(--accent)"
+                  >@BotFather</a
+                >
+                в Telegram
+              </small>
+            </div>
+            <div class="form-group full-width">
+              <div
+                style="
+                  background: var(--bg-secondary);
+                  border: 1px solid var(--border);
+                  border-radius: 8px;
+                  padding: 1rem;
+                  margin-top: 0.5rem;
+                "
+              >
+                <strong style="color: var(--warning)"
+                  >⚠️ Как добавить получателя Telegram:</strong
+                >
+                <ol
+                  style="
+                    margin: 0.5rem 0 0 1.25rem;
+                    color: var(--text-secondary);
+                    font-size: 0.9rem;
+                  "
+                >
+                  <li>
+                    Напишите боту
+                    <a
+                      href="https://t.me/userinfobot"
+                      target="_blank"
+                      style="color: var(--accent)"
+                      >@userinfobot</a
+                    >
+                    — он покажет ваш Chat ID
+                  </li>
+                  <li>
+                    Скопируйте число (например:
+                    <code
+                      style="
+                        background: var(--bg-card);
+                        padding: 0.1rem 0.3rem;
+                        border-radius: 4px;
+                      "
+                      >123456789</code
+                    >)
+                  </li>
+                  <li>
+                    <strong>Важно:</strong> напишите /start вашему боту, иначе
+                    он не сможет отправлять вам сообщения
+                  </li>
+                  <li>Добавьте получателя с этим Chat ID ниже</li>
+                </ol>
+              </div>
+            </div>
+            <div
+              class="form-group full-width"
+              style="justify-content: flex-end"
+            >
+              <button type="submit" class="btn btn-primary">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Сохранить настройки Telegram
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Recipients -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">👥 Получатели уведомлений</h2>
+          </div>
+          <form id="recipient-form" class="form-grid">
+            <div class="form-group">
+              <label for="recipient-channel">Канал</label>
+              <select id="recipient-channel">
+                <option value="email">📧 Email</option>
+                <option value="telegram">📱 Telegram</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="recipient-address" id="recipient-address-label"
+                >Email адрес</label
+              >
+              <input
+                type="text"
+                id="recipient-address"
+                placeholder="user@example.com"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="recipient-name">Имя (опционально)</label>
+              <input type="text" id="recipient-name" placeholder="Админ" />
+            </div>
+            <div class="form-group" style="justify-content: flex-end">
+              <button type="submit" class="btn btn-primary">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Добавить получателя
+              </button>
+            </div>
+          </form>
+
+          <div class="table-container" style="margin-top: 1.5rem">
+            <table>
+              <thead>
+                <tr>
+                  <th>Канал</th>
+                  <th>Адрес</th>
+                  <th>Имя</th>
+                  <th>Статус</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="recipients-table"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="recipients-empty" style="display: none">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 01-3.46 0" />
+            </svg>
+            <p>Нет получателей уведомлений</p>
+            <p style="font-size: 0.875rem; margin-top: 0.5rem">
+              Добавьте email или Telegram для получения уведомлений
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Users Section (Superadmin only) -->
+      <section id="users-section" class="section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Добавить пользователя</h2>
+          </div>
+          <form id="user-form" class="form-grid">
+            <div class="form-group">
+              <label for="user-username">Логин</label>
+              <input
+                type="text"
+                id="user-username"
+                placeholder="username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="user-email">Email (опционально)</label>
+              <input type="email" id="user-email" placeholder="user@example.com" />
+            </div>
+            <div class="form-group">
+              <label for="user-password">Пароль</label>
+              <input
+                type="password"
+                id="user-password"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="user-role">Роль</label>
+              <select id="user-role">
+                <option value="editor">Редактор</option>
+                <option value="superadmin">Суперадмин</option>
+              </select>
+            </div>
+            <div class="form-group" style="justify-content: flex-end">
+              <button type="submit" class="btn btn-primary">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Добавить пользователя
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Список пользователей</h2>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Логин</th>
+                  <th>Email</th>
+                  <th>Роль</th>
+                  <th>Статус</th>
+                  <th>Создан</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="users-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- History Modal -->
+    <div class="modal-overlay" id="history-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">История проверок</h3>
+          <button class="modal-close" onclick="closeHistoryModal()">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="history-list" id="history-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Proxy Modal -->
+    <div class="modal-overlay" id="edit-proxy-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">Редактировать прокси</h3>
+          <button class="modal-close" onclick="closeEditProxyModal()">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="edit-proxy-form" class="form-grid">
+            <input type="hidden" id="edit-proxy-id" />
+            <div class="form-group">
+              <label for="edit-proxy-name">Название</label>
+              <input
+                type="text"
+                id="edit-proxy-name"
+                placeholder="US Proxy 1"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-proxy-geo">Гео (страна)</label>
+              <input
+                type="text"
+                id="edit-proxy-geo"
+                placeholder="US, DE, RU..."
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-proxy-protocol">Протокол</label>
+              <select id="edit-proxy-protocol">
+                <option value="http">HTTP</option>
+                <option value="https">HTTPS</option>
+                <option value="socks5">SOCKS5</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-proxy-host">Хост</label>
+              <input
+                type="text"
+                id="edit-proxy-host"
+                placeholder="proxy.example.com"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-proxy-port">Порт</label>
+              <input
+                type="number"
+                id="edit-proxy-port"
+                placeholder="8080"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-proxy-username">Логин (опционально)</label>
+              <input
+                type="text"
+                id="edit-proxy-username"
+                placeholder="username"
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-proxy-password">Пароль (опционально)</label>
+              <input
+                type="password"
+                id="edit-proxy-password"
+                placeholder="Оставьте пустым, чтобы не менять"
+              />
+            </div>
+            <div class="form-group full-width">
+              <div class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  id="edit-proxy-active"
+                />
+                <label for="edit-proxy-active">Активен</label>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="closeEditProxyModal()"
+          >
+            Отмена
+          </button>
+          <button type="button" class="btn btn-primary" onclick="saveProxy()">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Сохранить
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSV Import Modal -->
+    <div class="modal-overlay" id="csv-import-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">📥 Импорт URL из CSV</h3>
+          <button class="modal-close" onclick="closeCsvImportModal()">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <strong style="color: var(--info)">📋 Формат CSV файла:</strong>
+            <div style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <p style="margin-bottom: 0.5rem;">Обязательные колонки:</p>
+              <ul style="margin: 0 0 0.75rem 1.25rem;">
+                <li><code style="background: var(--bg-card); padding: 0.1rem 0.3rem; border-radius: 4px;">url</code> — URL для мониторинга</li>
+              </ul>
+              <p style="margin-bottom: 0.5rem;">Опциональные колонки:</p>
+              <ul style="margin: 0 0 0.75rem 1.25rem;">
+                <li><code style="background: var(--bg-card); padding: 0.1rem 0.3rem; border-radius: 4px;">referral_url</code> — Ресурс основной</li>
+                <li><code style="background: var(--bg-card); padding: 0.1rem 0.3rem; border-radius: 4px;">name</code> — Название</li>
+                <li><code style="background: var(--bg-card); padding: 0.1rem 0.3rem; border-radius: 4px;">proxy_id</code> — ID прокси</li>
+                <li><code style="background: var(--bg-card); padding: 0.1rem 0.3rem; border-radius: 4px;">check_interval</code> — Интервал проверки (сек)</li>
+              </ul>
+            </div>
+            <div style="background: var(--bg-card); border-radius: 6px; padding: 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; overflow-x: auto;">
+              <div style="color: var(--text-muted);">Пример CSV:</div>
+              <pre style="margin: 0.5rem 0 0 0; color: var(--text-primary);">url,referral_url,name
+https://example.com/page1,https://source.com/res1,Страница 1
+https://example.com/page2,https://source.com/res2,Страница 2</pre>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="csv-file">Выберите CSV файл</label>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <input 
+                type="file" 
+                id="csv-file" 
+                accept=".csv" 
+                style="padding: 0.5rem; cursor: pointer; flex: 1;"
+              />
+              <button type="button" class="btn btn-secondary" onclick="downloadCsvTemplate()" style="white-space: nowrap;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Скачать шаблон
+              </button>
+            </div>
+          </div>
+          
+          <div id="csv-import-result" style="display: none; margin-top: 1rem;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeCsvImportModal()">
+            Отмена
+          </button>
+          <button type="button" class="btn btn-primary" onclick="importCsv()" id="import-csv-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Импортировать
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+      const API_BASE = "";
+      let proxies = [];
+      let urls = [];
+      let recipients = [];
+      let users = [];
+      let notificationSettings = {};
+      let selectedGeoFilter = "";
+      let currentUser = null;
+
+      // Auth helpers
+      function getAuthHeaders() {
+        const token = localStorage.getItem('access_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+      }
+
+      async function authFetch(url, options = {}) {
+        const headers = {
+          ...getAuthHeaders(),
+          ...options.headers
+        };
+        const response = await fetch(url, { ...options, headers });
+        if (response.status === 401) {
+          localStorage.removeItem('access_token');
+          window.location.href = '/login';
+          throw new Error('Unauthorized');
+        }
+        return response;
+      }
+
+      // Check authentication on load
+      async function checkAuth() {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          window.location.href = '/login';
+          return false;
+        }
+        
+        try {
+          const res = await fetch(`${API_BASE}/api/auth/me`, {
+            headers: getAuthHeaders()
+          });
+          
+          if (!res.ok) {
+            localStorage.removeItem('access_token');
+            window.location.href = '/login';
+            return false;
+          }
+          
+          currentUser = await res.json();
+          document.getElementById('current-user-badge').textContent = 
+            `👤 ${currentUser.username} (${currentUser.role === 'superadmin' ? 'Админ' : 'Редактор'})`;
+          
+          // Show superadmin tabs
+          if (currentUser.role === 'superadmin') {
+            document.getElementById('tab-notifications').style.display = '';
+            document.getElementById('tab-users').style.display = '';
+          }
+          
+          return true;
+        } catch (e) {
+          localStorage.removeItem('access_token');
+          window.location.href = '/login';
+          return false;
+        }
+      }
+
+      // Logout
+      function logout() {
+        localStorage.removeItem('access_token');
+        window.location.href = '/login';
+      }
+
+      // Tab switching
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tab")
+            .forEach((t) => t.classList.remove("active"));
+          document
+            .querySelectorAll(".section")
+            .forEach((s) => s.classList.remove("active"));
+          tab.classList.add("active");
+          document
+            .getElementById(`${tab.dataset.tab}-section`)
+            .classList.add("active");
+        });
+      });
+
+      // Toast notifications
+      function showToast(message, type = "success") {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+                <span style="color: var(--${
+                  type === "success" ? "success" : "error"
+                })">${type === "success" ? "✓" : "✗"}</span>
+                <span>${message}</span>
+            `;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      }
+
+      // Format date (server sends UTC without timezone indicator)
+      function formatDate(dateStr) {
+        if (!dateStr) return "—";
+        // Append 'Z' to indicate UTC if no timezone info present
+        if (
+          !dateStr.endsWith("Z") &&
+          !dateStr.includes("+") &&
+          !dateStr.includes("-", 10)
+        ) {
+          dateStr += "Z";
+        }
+        const date = new Date(dateStr);
+        return date.toLocaleString("ru-RU", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      }
+
+      // Get status badge class
+      function getStatusBadgeClass(code) {
+        if (!code) return "neutral";
+        if (code >= 200 && code < 300) return "success";
+        if (code >= 300 && code < 400) return "info";
+        if (code >= 400 && code < 500) return "warning";
+        return "error";
+      }
+
+      // Load stats
+      async function loadStats() {
+        try {
+          const res = await authFetch(`${API_BASE}/api/stats`);
+          const stats = await res.json();
+          document.getElementById("stat-total").textContent = stats.total_urls;
+          document.getElementById("stat-active").textContent =
+            stats.active_urls;
+          document.getElementById("stat-200").textContent = stats.urls_200;
+          document.getElementById("stat-error").textContent = stats.urls_error;
+          document.getElementById("stat-proxies").textContent =
+            stats.total_proxies;
+        } catch (e) {
+          console.error("Failed to load stats:", e);
+        }
+      }
+
+      // Load proxies
+      async function loadProxies() {
+        try {
+          const res = await authFetch(`${API_BASE}/api/proxies`);
+          proxies = await res.json();
+          renderProxies();
+          updateProxySelect();
+          updateGeoFilter();
+        } catch (e) {
+          console.error("Failed to load proxies:", e);
+        }
+      }
+
+      // Render proxies table
+      function renderProxies() {
+        const tbody = document.getElementById("proxies-table");
+        const empty = document.getElementById("proxies-empty");
+
+        if (proxies.length === 0) {
+          tbody.innerHTML = "";
+          empty.style.display = "block";
+          return;
+        }
+
+        empty.style.display = "none";
+        tbody.innerHTML = proxies
+          .map(
+            (p) => `
+                <tr>
+                    <td><strong>${escapeHtml(p.name)}</strong></td>
+                    <td>
+                        ${
+                          p.geo
+                            ? `<span class="geo-badge">🌍 ${escapeHtml(
+                                p.geo
+                              )}</span>`
+                            : "—"
+                        }
+                    </td>
+                    <td class="url-text">${escapeHtml(p.host)}:${p.port}</td>
+                    <td><span class="status-badge info">${p.protocol.toUpperCase()}</span></td>
+                    <td>
+                        <span class="status-badge ${
+                          p.is_active ? "success" : "neutral"
+                        }">
+                            <span class="status-dot"></span>
+                            ${p.is_active ? "Активен" : "Выключен"}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-icon" onclick="editProxy(${
+                              p.id
+                            })" title="Редактировать">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" onclick="toggleProxy(${
+                              p.id
+                            }, ${!p.is_active})" title="${
+              p.is_active ? "Выключить" : "Включить"
+            }">
+                                ${p.is_active ? "⏸" : "▶"}
+                            </button>
+                            <button class="btn-icon error" onclick="deleteProxy(${
+                              p.id
+                            })" title="Удалить">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `
+          )
+          .join("");
+      }
+
+      // Update proxy select
+      function updateProxySelect() {
+        const select = document.getElementById("url-proxy");
+        select.innerHTML =
+          '<option value="">Без прокси (напрямую)</option>' +
+          proxies
+            .filter((p) => p.is_active)
+            .map(
+              (p) =>
+                `<option value="${p.id}">${escapeHtml(p.name)}${
+                  p.geo ? ` (${p.geo})` : ""
+                }</option>`
+            )
+            .join("");
+      }
+
+      // Update geo filter dropdown
+      function updateGeoFilter() {
+        const select = document.getElementById("geo-filter");
+        // Collect unique geos from URLs that have proxies with geo
+        const geos = new Set();
+        let hasDirectUrls = false;
+        
+        urls.forEach(u => {
+          if (u.proxy && u.proxy.geo) {
+            geos.add(u.proxy.geo.toUpperCase());
+          } else if (!u.proxy) {
+            hasDirectUrls = true;
+          }
+        });
+        // Also add geos from proxies that might not be used yet
+        proxies.forEach(p => {
+          if (p.geo) {
+            geos.add(p.geo.toUpperCase());
+          }
+        });
+        
+        const sortedGeos = Array.from(geos).sort();
+        const currentValue = selectedGeoFilter;
+        
+        let options = '<option value="">Все</option>';
+        if (hasDirectUrls) {
+          options += `<option value="__direct__"${currentValue === '__direct__' ? ' selected' : ''}>Напрямую (без прокси)</option>`;
+        }
+        options += sortedGeos.map(geo => 
+          `<option value="${geo}"${geo === currentValue ? ' selected' : ''}>${geo}</option>`
+        ).join('');
+        
+        select.innerHTML = options;
+      }
+
+      // Filter URLs by geo
+      function filterUrlsByGeo() {
+        selectedGeoFilter = document.getElementById("geo-filter").value;
+        renderUrls();
+      }
+
+      // Get filtered URLs by geo
+      function getFilteredUrls() {
+        if (!selectedGeoFilter) {
+          return urls;
+        }
+        if (selectedGeoFilter === '__direct__') {
+          return urls.filter(u => !u.proxy);
+        }
+        return urls.filter(u => {
+          if (!u.proxy || !u.proxy.geo) {
+            return false;
+          }
+          return u.proxy.geo.toUpperCase() === selectedGeoFilter;
+        });
+      }
+
+      // Load URLs
+      async function loadUrls() {
+        try {
+          const res = await authFetch(`${API_BASE}/api/urls`);
+          urls = await res.json();
+          updateGeoFilter();
+          renderUrls();
+        } catch (e) {
+          console.error("Failed to load URLs:", e);
+        }
+      }
+
+      // Автоматическая сортировка URL-ов по статусу (коду ответа)
+      function getSortedUrls(urlsList) {
+        return [...urlsList].sort((a, b) => {
+          // URL без статуса (null/undefined) идут в конец
+          const statusA = a.last_status_code ?? 99999;
+          const statusB = b.last_status_code ?? 99999;
+          return statusA - statusB;
+        });
+      }
+
+      // Render URLs table
+      function renderUrls() {
+        const tbody = document.getElementById("urls-table");
+        const empty = document.getElementById("urls-empty");
+        const filteredUrls = getFilteredUrls();
+
+        if (filteredUrls.length === 0) {
+          tbody.innerHTML = "";
+          empty.style.display = "block";
+          if (selectedGeoFilter && urls.length > 0) {
+            if (selectedGeoFilter === '__direct__') {
+              empty.querySelector("p").textContent = 'Нет URL без прокси (напрямую)';
+            } else {
+              empty.querySelector("p").textContent = `Нет URL с гео "${selectedGeoFilter}"`;
+            }
+          } else {
+            empty.querySelector("p").textContent = "Нет URL для мониторинга";
+          }
+          return;
+        }
+
+        empty.style.display = "none";
+        const sortedUrls = getSortedUrls(filteredUrls);
+        tbody.innerHTML = sortedUrls
+          .map(
+            (u) => `
+                <tr>
+                    <td>
+                        <div>
+                            ${
+                              u.name
+                                ? `<strong>${escapeHtml(u.name)}</strong><br>`
+                                : ""
+                            }
+                            <span class="url-text">${escapeHtml(u.url)}</span>
+                        </div>
+                    </td>
+                    <td>
+                        ${
+                          u.referral_url
+                            ? `<a href="${escapeHtml(u.referral_url)}" target="_blank" rel="noopener noreferrer" class="url-text" style="max-width: 200px; display: block; text-decoration: none;" title="${escapeHtml(u.referral_url)}">${escapeHtml(u.referral_url)}</a>`
+                            : '<span style="color: var(--text-muted)">—</span>'
+                        }
+                    </td>
+                    <td>
+                        ${
+                          u.proxy
+                            ? `<span class="geo-badge">🌍 ${escapeHtml(
+                                u.proxy.geo || u.proxy.name
+                              )}</span>`
+                            : '<span style="color: var(--text-muted)">Напрямую</span>'
+                        }
+                    </td>
+                    <td>
+                        <span class="status-badge ${getStatusBadgeClass(
+                          u.last_status_code
+                        )}" ${
+              !u.last_status_code && u.last_error
+                ? `title="${escapeHtml(u.last_error)}"`
+                : ""
+            }>
+                            <span class="status-dot"></span>
+                            ${u.last_status_code || "N/A"}
+                        </span>
+                    </td>
+                    <td>
+                        ${
+                          u.last_redirect_count > 0
+                            ? `<span class="redirect-badge" title="${
+                                u.last_redirect_count > 1
+                                  ? u.last_redirect_count + ' редиректов'
+                                  : '1 редирект'
+                              }">${u.last_redirect_code || '3xx'}</span>`
+                            : '<span style="color: var(--text-muted)">—</span>'
+                        }
+                    </td>
+                    <td>
+                        ${
+                          u.last_redirect_count > 0 && u.last_final_url
+                            ? `<a href="${escapeHtml(u.last_final_url)}" target="_blank" rel="noopener noreferrer" class="url-text" style="max-width: 250px; display: block; text-decoration: none;" title="${escapeHtml(u.last_final_url)}">${escapeHtml(u.last_final_url)}</a>`
+                            : '<span style="color: var(--text-muted)">—</span>'
+                        }
+                    </td>
+                    <td class="response-time">
+                        ${
+                          u.last_response_time
+                            ? `${u.last_response_time} ms`
+                            : "—"
+                        }
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.875rem;">
+                        ${formatDate(u.last_check)}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="${escapeHtml(u.url)}" target="_blank" rel="noopener noreferrer" class="btn-icon" title="Открыть URL" style="text-decoration: none;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                            </a>
+                            <button class="btn-icon success" onclick="checkNow(${
+                              u.id
+                            })" title="Проверить сейчас">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" onclick="showHistory(${
+                              u.id
+                            })" title="История">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" onclick="toggleUrl(${
+                              u.id
+                            }, ${!u.is_active})" title="${
+              u.is_active ? "Выключить" : "Включить"
+            }">
+                                ${u.is_active ? "⏸" : "▶"}
+                            </button>
+                            <button class="btn-icon error" onclick="deleteUrl(${
+                              u.id
+                            })" title="Удалить">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `
+          )
+          .join("");
+      }
+
+      // Add proxy
+      document
+        .getElementById("proxy-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const data = {
+            name: document.getElementById("proxy-name").value,
+            geo: document.getElementById("proxy-geo").value || null,
+            protocol: document.getElementById("proxy-protocol").value,
+            host: document.getElementById("proxy-host").value,
+            port: parseInt(document.getElementById("proxy-port").value),
+            username: document.getElementById("proxy-username").value || null,
+            password: document.getElementById("proxy-password").value || null,
+          };
+
+          try {
+            const res = await authFetch(`${API_BASE}/api/proxies`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+              showToast("Прокси добавлен");
+              e.target.reset();
+              loadProxies();
+              loadStats();
+            } else {
+              showToast("Ошибка добавления прокси", "error");
+            }
+          } catch (err) {
+            showToast("Ошибка соединения", "error");
+          }
+        });
+
+      // Add URL
+      document
+        .getElementById("url-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const data = {
+            url: document.getElementById("url-input").value,
+            referral_url: document.getElementById("url-referral").value || null,
+            name: document.getElementById("url-name").value || null,
+            proxy_id: document.getElementById("url-proxy").value
+              ? parseInt(document.getElementById("url-proxy").value)
+              : null,
+            check_interval: parseInt(
+              document.getElementById("url-interval").value
+            ),
+          };
+
+          try {
+            const res = await authFetch(`${API_BASE}/api/urls`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+              showToast("URL добавлен");
+              e.target.reset();
+              document.getElementById("url-interval").value = "60";
+              loadUrls();
+              loadStats();
+            } else {
+              showToast("Ошибка добавления URL", "error");
+            }
+          } catch (err) {
+            showToast("Ошибка соединения", "error");
+          }
+        });
+
+      // Delete proxy
+      async function deleteProxy(id) {
+        if (!confirm("Удалить прокси?")) return;
+        try {
+          const res = await authFetch(`${API_BASE}/api/proxies/${id}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            const error = await res.json().catch(() => ({}));
+            throw new Error(error.detail || "Ошибка удаления");
+          }
+          showToast("Прокси удалён");
+          loadProxies();
+          loadStats();
+        } catch (err) {
+          showToast(err.message || "Ошибка удаления", "error");
+        }
+      }
+
+      // Toggle proxy
+      async function toggleProxy(id, isActive) {
+        try {
+          await authFetch(`${API_BASE}/api/proxies/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ is_active: isActive }),
+          });
+          loadProxies();
+        } catch (err) {
+          showToast("Ошибка", "error");
+        }
+      }
+
+      // Edit proxy - open modal
+      function editProxy(id) {
+        const proxy = proxies.find((p) => p.id === id);
+        if (!proxy) return;
+
+        document.getElementById("edit-proxy-id").value = proxy.id;
+        document.getElementById("edit-proxy-name").value = proxy.name || "";
+        document.getElementById("edit-proxy-geo").value = proxy.geo || "";
+        document.getElementById("edit-proxy-protocol").value =
+          proxy.protocol || "http";
+        document.getElementById("edit-proxy-host").value = proxy.host || "";
+        document.getElementById("edit-proxy-port").value = proxy.port || "";
+        document.getElementById("edit-proxy-username").value =
+          proxy.username || "";
+        document.getElementById("edit-proxy-password").value = ""; // Don't show password
+        document.getElementById("edit-proxy-active").checked = proxy.is_active;
+
+        document.getElementById("edit-proxy-modal").classList.add("active");
+      }
+
+      // Close edit proxy modal
+      function closeEditProxyModal() {
+        document.getElementById("edit-proxy-modal").classList.remove("active");
+      }
+
+      // Save proxy changes
+      async function saveProxy() {
+        const id = document.getElementById("edit-proxy-id").value;
+        const password = document.getElementById("edit-proxy-password").value;
+
+        const data = {
+          name: document.getElementById("edit-proxy-name").value,
+          geo: document.getElementById("edit-proxy-geo").value || null,
+          protocol: document.getElementById("edit-proxy-protocol").value,
+          host: document.getElementById("edit-proxy-host").value,
+          port: parseInt(document.getElementById("edit-proxy-port").value),
+          username:
+            document.getElementById("edit-proxy-username").value || null,
+          is_active: document.getElementById("edit-proxy-active").checked,
+        };
+
+        // Only update password if it was entered
+        if (password) {
+          data.password = password;
+        }
+
+        try {
+          const res = await authFetch(`${API_BASE}/api/proxies/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          if (res.ok) {
+            showToast("Прокси обновлён");
+            closeEditProxyModal();
+            loadProxies();
+          } else {
+            const error = await res.json().catch(() => ({}));
+            showToast(error.detail || "Ошибка обновления", "error");
+          }
+        } catch (err) {
+          showToast("Ошибка соединения", "error");
+        }
+      }
+
+      // Delete URL
+      async function deleteUrl(id) {
+        if (!confirm("Удалить URL из мониторинга?")) return;
+        try {
+          const res = await authFetch(`${API_BASE}/api/urls/${id}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            const error = await res.json().catch(() => ({}));
+            throw new Error(error.detail || "Ошибка удаления");
+          }
+          showToast("URL удалён");
+          loadUrls();
+          loadStats();
+        } catch (err) {
+          showToast(err.message || "Ошибка удаления", "error");
+        }
+      }
+
+      // Toggle URL
+      async function toggleUrl(id, isActive) {
+        try {
+          await authFetch(`${API_BASE}/api/urls/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ is_active: isActive }),
+          });
+          loadUrls();
+          loadStats();
+        } catch (err) {
+          showToast("Ошибка", "error");
+        }
+      }
+
+      // Check URL now
+      async function checkNow(id) {
+        try {
+          showToast("Проверка...");
+          const res = await authFetch(`${API_BASE}/api/urls/${id}/check`, {
+            method: "POST",
+          });
+          const result = await res.json();
+          if (result.status_code) {
+            showToast(
+              `Статус: ${result.status_code} (${result.response_time}ms)`
+            );
+          } else {
+            showToast(`Ошибка: ${result.error}`, "error");
+          }
+          loadUrls();
+          loadStats();
+        } catch (err) {
+          showToast("Ошибка проверки", "error");
+        }
+      }
+
+      // Check all URLs now
+      async function checkAllUrls() {
+        try {
+          showToast("Проверяем все URL...");
+          const res = await authFetch(`${API_BASE}/api/urls/check-all`, {
+            method: "POST",
+          });
+          const result = await res.json();
+          showToast(result.message);
+          loadUrls();
+          loadStats();
+        } catch (err) {
+          showToast("Ошибка проверки", "error");
+        }
+      }
+
+      // Show history
+      async function showHistory(id) {
+        try {
+          const res = await authFetch(`${API_BASE}/api/urls/${id}/history`);
+          const history = await res.json();
+
+          const list = document.getElementById("history-list");
+          if (history.length === 0) {
+            list.innerHTML =
+              '<div class="empty-state"><p>Нет истории проверок</p></div>';
+          } else {
+            list.innerHTML = history
+              .map(
+                (h) => `
+                        <div class="history-item">
+                            <span class="status-badge ${getStatusBadgeClass(
+                              h.status_code
+                            )}">
+                                <span class="status-dot"></span>
+                                ${h.status_code || "ERR"}
+                            </span>
+                            <span class="response-time">${
+                              h.response_time ? `${h.response_time}ms` : "—"
+                            }</span>
+                            <span class="history-time">${formatDate(
+                              h.checked_at
+                            )}</span>
+                        </div>
+                    `
+              )
+              .join("");
+          }
+
+          document.getElementById("history-modal").classList.add("active");
+        } catch (err) {
+          showToast("Ошибка загрузки истории", "error");
+        }
+      }
+
+      function closeHistoryModal() {
+        document.getElementById("history-modal").classList.remove("active");
+      }
+
+      // Close modal on outside click
+      document
+        .getElementById("history-modal")
+        .addEventListener("click", (e) => {
+          if (e.target.classList.contains("modal-overlay")) {
+            closeHistoryModal();
+          }
+        });
+
+      document
+        .getElementById("edit-proxy-modal")
+        .addEventListener("click", (e) => {
+          if (e.target.classList.contains("modal-overlay")) {
+            closeEditProxyModal();
+          }
+        });
+
+      // Escape HTML
+      function escapeHtml(text) {
+        if (!text) return "";
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Refresh all
+      function refreshAll() {
+        loadStats();
+        loadProxies();
+        loadUrls();
+        loadNotificationSettings();
+        loadRecipients();
+        showToast("Данные обновлены");
+      }
+
+      // Auto-refresh
+      setInterval(() => {
+        loadStats();
+        loadUrls();
+      }, 10000);
+
+      // ==================== Notifications ====================
+
+      // Load notification settings
+      async function loadNotificationSettings() {
+        if (!currentUser || currentUser.role !== 'superadmin') return;
+        try {
+          const res = await authFetch(`${API_BASE}/api/notifications/settings`);
+          notificationSettings = await res.json();
+
+          // Fill form fields
+          document.getElementById("smtp-host").value =
+            notificationSettings.smtp_host || "";
+          document.getElementById("smtp-port").value =
+            notificationSettings.smtp_port || 587;
+          document.getElementById("smtp-username").value =
+            notificationSettings.smtp_username || "";
+          document.getElementById("smtp-from-email").value =
+            notificationSettings.smtp_from_email || "";
+          document.getElementById("smtp-use-tls").checked =
+            notificationSettings.smtp_use_tls !== false;
+          document.getElementById("telegram-bot-token").value =
+            notificationSettings.telegram_bot_token || "";
+          document.getElementById("notify-on-error").checked =
+            notificationSettings.notify_on_error !== false;
+          document.getElementById("notify-on-recovery").checked =
+            notificationSettings.notify_on_recovery !== false;
+          document.getElementById("notify-on-status-change").checked =
+            notificationSettings.notify_on_status_change === true;
+          document.getElementById("notify-on-every-check").checked =
+            notificationSettings.notify_on_every_check === true;
+        } catch (e) {
+          console.error("Failed to load notification settings:", e);
+        }
+      }
+
+      // Save SMTP settings
+      document
+        .getElementById("smtp-settings-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const data = {
+            smtp_host: document.getElementById("smtp-host").value || null,
+            smtp_port:
+              parseInt(document.getElementById("smtp-port").value) || 587,
+            smtp_username:
+              document.getElementById("smtp-username").value || null,
+            smtp_from_email:
+              document.getElementById("smtp-from-email").value || null,
+            smtp_use_tls: document.getElementById("smtp-use-tls").checked,
+            notify_on_error: document.getElementById("notify-on-error").checked,
+            notify_on_recovery:
+              document.getElementById("notify-on-recovery").checked,
+            notify_on_status_change: document.getElementById(
+              "notify-on-status-change"
+            ).checked,
+          };
+
+          // Only include password if it's filled
+          const password = document.getElementById("smtp-password").value;
+          if (password) {
+            data.smtp_password = password;
+          }
+
+          try {
+            const res = await authFetch(`${API_BASE}/api/notifications/settings`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+              showToast("Настройки SMTP сохранены");
+              document.getElementById("smtp-password").value = "";
+              loadNotificationSettings();
+            } else {
+              showToast("Ошибка сохранения настроек", "error");
+            }
+          } catch (err) {
+            showToast("Ошибка соединения", "error");
+          }
+        });
+
+      // Save Telegram settings
+      document
+        .getElementById("telegram-settings-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const data = {
+            telegram_bot_token:
+              document.getElementById("telegram-bot-token").value || null,
+          };
+
+          try {
+            const res = await authFetch(`${API_BASE}/api/notifications/settings`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+              showToast("Настройки Telegram сохранены");
+              loadNotificationSettings();
+            } else {
+              showToast("Ошибка сохранения настроек", "error");
+            }
+          } catch (err) {
+            showToast("Ошибка соединения", "error");
+          }
+        });
+
+      // Load recipients
+      async function loadRecipients() {
+        if (!currentUser || currentUser.role !== 'superadmin') return;
+        try {
+          const res = await authFetch(`${API_BASE}/api/notifications/recipients`);
+          recipients = await res.json();
+          renderRecipients();
+        } catch (e) {
+          console.error("Failed to load recipients:", e);
+        }
+      }
+
+      // Render recipients table
+      function renderRecipients() {
+        const tbody = document.getElementById("recipients-table");
+        const empty = document.getElementById("recipients-empty");
+
+        if (recipients.length === 0) {
+          tbody.innerHTML = "";
+          empty.style.display = "block";
+          return;
+        }
+
+        empty.style.display = "none";
+        tbody.innerHTML = recipients
+          .map(
+            (r) => `
+                <tr>
+                    <td>
+                        <span class="status-badge ${
+                          r.channel === "email" ? "info" : "success"
+                        }">
+                            ${
+                              r.channel === "email" ? "📧 Email" : "📱 Telegram"
+                            }
+                        </span>
+                    </td>
+                    <td class="url-text">${escapeHtml(r.address)}</td>
+                    <td>${escapeHtml(r.name) || "—"}</td>
+                    <td>
+                        <span class="status-badge ${
+                          r.is_active ? "success" : "neutral"
+                        }">
+                            <span class="status-dot"></span>
+                            ${r.is_active ? "Активен" : "Выключен"}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-icon success" onclick="testRecipient('${
+                              r.channel
+                            }', '${escapeHtml(r.address)}')" title="Тест">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" onclick="toggleRecipient(${
+                              r.id
+                            }, ${!r.is_active})" title="${
+              r.is_active ? "Выключить" : "Включить"
+            }">
+                                ${r.is_active ? "⏸" : "▶"}
+                            </button>
+                            <button class="btn-icon error" onclick="deleteRecipient(${
+                              r.id
+                            })" title="Удалить">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `
+          )
+          .join("");
+      }
+
+      // Add recipient
+      document
+        .getElementById("recipient-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const data = {
+            channel: document.getElementById("recipient-channel").value,
+            address: document.getElementById("recipient-address").value,
+            name: document.getElementById("recipient-name").value || null,
+          };
+
+          try {
+            const res = await authFetch(
+              `${API_BASE}/api/notifications/recipients`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              }
+            );
+
+            if (res.ok) {
+              showToast("Получатель добавлен");
+              e.target.reset();
+              loadRecipients();
+            } else {
+              showToast("Ошибка добавления получателя", "error");
+            }
+          } catch (err) {
+            showToast("Ошибка соединения", "error");
+          }
+        });
+
+      // Update label for recipient address based on channel
+      document
+        .getElementById("recipient-channel")
+        .addEventListener("change", (e) => {
+          const label = document.getElementById("recipient-address-label");
+          const input = document.getElementById("recipient-address");
+          if (e.target.value === "email") {
+            label.textContent = "Email адрес";
+            input.placeholder = "user@example.com";
+            input.type = "email";
+          } else {
+            label.textContent = "Telegram Chat ID (число)";
+            input.placeholder = "123456789 (узнать у @userinfobot)";
+            input.type = "text";
+          }
+        });
+
+      // Auto-save notification checkboxes when changed
+      async function saveNotificationCheckboxes() {
+        const data = {
+          notify_on_error: document.getElementById("notify-on-error").checked,
+          notify_on_recovery:
+            document.getElementById("notify-on-recovery").checked,
+          notify_on_status_change: document.getElementById(
+            "notify-on-status-change"
+          ).checked,
+          notify_on_every_check: document.getElementById(
+            "notify-on-every-check"
+          ).checked,
+        };
+
+        try {
+          const res = await authFetch(`${API_BASE}/api/notifications/settings`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          if (res.ok) {
+            showToast("Настройки сохранены");
+          } else {
+            showToast("Ошибка сохранения", "error");
+          }
+        } catch (err) {
+          showToast("Ошибка соединения", "error");
+        }
+      }
+
+      // Add event listeners to notification checkboxes
+      document
+        .getElementById("notify-on-error")
+        .addEventListener("change", saveNotificationCheckboxes);
+      document
+        .getElementById("notify-on-recovery")
+        .addEventListener("change", saveNotificationCheckboxes);
+      document
+        .getElementById("notify-on-status-change")
+        .addEventListener("change", saveNotificationCheckboxes);
+      document
+        .getElementById("notify-on-every-check")
+        .addEventListener("change", saveNotificationCheckboxes);
+
+      // Toggle recipient
+      async function toggleRecipient(id, isActive) {
+        try {
+          await authFetch(`${API_BASE}/api/notifications/recipients/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ is_active: isActive }),
+          });
+          loadRecipients();
+        } catch (err) {
+          showToast("Ошибка", "error");
+        }
+      }
+
+      // Delete recipient
+      async function deleteRecipient(id) {
+        if (!confirm("Удалить получателя?")) return;
+        try {
+          const res = await authFetch(
+            `${API_BASE}/api/notifications/recipients/${id}`,
+            { method: "DELETE" }
+          );
+          if (res.ok) {
+            showToast("Получатель удалён");
+            loadRecipients();
+          } else {
+            showToast("Ошибка удаления", "error");
+          }
+        } catch (err) {
+          showToast("Ошибка соединения", "error");
+        }
+      }
+
+      // Test notification
+      async function testRecipient(channel, address) {
+        try {
+          showToast("Отправка тестового уведомления...");
+          const res = await authFetch(`${API_BASE}/api/notifications/test`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ channel, address }),
+          });
+
+          if (res.ok) {
+            showToast("Тестовое уведомление отправлено!");
+          } else {
+            const error = await res.json().catch(() => ({}));
+            showToast(error.detail || "Ошибка отправки", "error");
+          }
+        } catch (err) {
+          showToast("Ошибка соединения", "error");
+        }
+      }
+
+      // ==================== CSV Import ====================
+
+      // Download CSV template
+      function downloadCsvTemplate() {
+        const template = `url,referral_url,name,proxy_id,check_interval
+https://example.com/page1,https://source-site.com/resource1,Название 1,,60
+https://example.com/page2,https://source-site.com/resource2,Название 2,,60`;
+        
+        const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'url_import_template.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showToast('Шаблон CSV скачан');
+      }
+
+      // Show CSV import modal
+      function showCsvImportModal() {
+        document.getElementById("csv-file").value = "";
+        document.getElementById("csv-import-result").style.display = "none";
+        document.getElementById("csv-import-result").innerHTML = "";
+        document.getElementById("csv-import-modal").classList.add("active");
+      }
+
+      // Close CSV import modal
+      function closeCsvImportModal() {
+        document.getElementById("csv-import-modal").classList.remove("active");
+      }
+
+      // Close modal on outside click
+      document.getElementById("csv-import-modal").addEventListener("click", (e) => {
+        if (e.target.classList.contains("modal-overlay")) {
+          closeCsvImportModal();
+        }
+      });
+
+      // Import CSV file
+      async function importCsv() {
+        const fileInput = document.getElementById("csv-file");
+        const resultDiv = document.getElementById("csv-import-result");
+        const importBtn = document.getElementById("import-csv-btn");
+        
+        if (!fileInput.files || fileInput.files.length === 0) {
+          showToast("Выберите CSV файл", "error");
+          return;
+        }
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+
+        // Show loading state
+        importBtn.disabled = true;
+        importBtn.innerHTML = '<div class="spinner"></div> Импортируем...';
+        resultDiv.style.display = "none";
+
+        try {
+          const res = await authFetch(`${API_BASE}/api/urls/import-csv`, {
+            method: "POST",
+            body: formData
+          });
+
+          const result = await res.json();
+
+          if (res.ok) {
+            // Show success result
+            let html = `
+              <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); border-radius: 8px; padding: 1rem;">
+                <strong style="color: var(--success)">✓ ${result.message}</strong>
+            `;
+            
+            if (result.errors && result.errors.length > 0) {
+              html += `
+                <div style="margin-top: 0.75rem; font-size: 0.875rem; color: var(--text-secondary);">
+                  <strong>Пропущенные строки:</strong>
+                  <ul style="margin: 0.5rem 0 0 1.25rem;">
+                    ${result.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}
+                  </ul>
+                </div>
+              `;
+            }
+            
+            html += `</div>`;
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = "block";
+
+            if (result.imported > 0) {
+              showToast(`Импортировано ${result.imported} URL`);
+              loadUrls();
+              loadStats();
+              // Auto-close modal after 3 seconds on success
+              setTimeout(() => {
+                closeCsvImportModal();
+              }, 3000);
+            }
+          } else {
+            // Show error
+            resultDiv.innerHTML = `
+              <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 8px; padding: 1rem;">
+                <strong style="color: var(--error)">✗ Ошибка: ${escapeHtml(result.detail || 'Не удалось импортировать')}</strong>
+              </div>
+            `;
+            resultDiv.style.display = "block";
+            showToast(result.detail || "Ошибка импорта", "error");
+          }
+        } catch (err) {
+          resultDiv.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 8px; padding: 1rem;">
+              <strong style="color: var(--error)">✗ Ошибка соединения</strong>
+            </div>
+          `;
+          resultDiv.style.display = "block";
+          showToast("Ошибка соединения", "error");
+        } finally {
+          // Reset button
+          importBtn.disabled = false;
+          importBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Импортировать
+          `;
+        }
+      }
+
+      // ==================== Users Management (Superadmin only) ====================
+
+      // Load users
+      async function loadUsers() {
+        if (!currentUser || currentUser.role !== 'superadmin') return;
+        try {
+          const res = await authFetch(`${API_BASE}/api/users`);
+          users = await res.json();
+          renderUsers();
+        } catch (e) {
+          console.error("Failed to load users:", e);
+        }
+      }
+
+      // Render users table
+      function renderUsers() {
+        const tbody = document.getElementById("users-table");
+        if (!tbody) return;
+
+        tbody.innerHTML = users
+          .map(
+            (u) => `
+                <tr>
+                    <td><strong>${escapeHtml(u.username)}</strong></td>
+                    <td>${escapeHtml(u.email) || "—"}</td>
+                    <td>
+                        <span class="status-badge ${u.role === 'superadmin' ? 'warning' : 'info'}">
+                            ${u.role === 'superadmin' ? '👑 Суперадмин' : '✏️ Редактор'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge ${u.is_active ? 'success' : 'neutral'}">
+                            <span class="status-dot"></span>
+                            ${u.is_active ? 'Активен' : 'Выключен'}
+                        </span>
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.875rem;">
+                        ${formatDate(u.created_at)}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            ${u.id !== currentUser.id ? `
+                            <button class="btn-icon" onclick="toggleUser(${u.id}, ${!u.is_active})" title="${u.is_active ? 'Деактивировать' : 'Активировать'}">
+                                ${u.is_active ? '⏸' : '▶'}
+                            </button>
+                            <button class="btn-icon" onclick="resetUserPassword(${u.id}, '${escapeHtml(u.username)}')" title="Сбросить пароль">
+                                🔑
+                            </button>
+                            <button class="btn-icon error" onclick="deleteUser(${u.id})" title="Удалить">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                </svg>
+                            </button>
+                            ` : '<span style="color: var(--text-muted)">—</span>'}
+                        </div>
+                    </td>
+                </tr>
+            `
+          )
+          .join("");
+      }
+
+      // Add user
+      document
+        .getElementById("user-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const data = {
+            username: document.getElementById("user-username").value,
+            email: document.getElementById("user-email").value || null,
+            password: document.getElementById("user-password").value,
+            role: document.getElementById("user-role").value,
+          };
+
+          try {
+            const res = await authFetch(`${API_BASE}/api/users`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+              showToast("Пользователь создан");
+              e.target.reset();
+              loadUsers();
+            } else {
+              const error = await res.json().catch(() => ({}));
+              showToast(error.detail || "Ошибка создания пользователя", "error");
+            }
+          } catch (err) {
+            showToast("Ошибка соединения", "error");
+          }
+        });
+
+      // Toggle user
+      async function toggleUser(id, isActive) {
+        try {
+          await authFetch(`${API_BASE}/api/users/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ is_active: isActive }),
+          });
+          showToast(isActive ? "Пользователь активирован" : "Пользователь деактивирован");
+          loadUsers();
+        } catch (err) {
+          showToast("Ошибка", "error");
+        }
+      }
+
+      // Reset user password
+      async function resetUserPassword(id, username) {
+        const newPassword = prompt(`Новый пароль для ${username}:`);
+        if (!newPassword) return;
+        
+        if (newPassword.length < 4) {
+          showToast("Пароль слишком короткий", "error");
+          return;
+        }
+
+        try {
+          const res = await authFetch(`${API_BASE}/api/users/${id}/password`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: newPassword }),
+          });
+
+          if (res.ok) {
+            showToast("Пароль изменён");
+          } else {
+            const error = await res.json().catch(() => ({}));
+            showToast(error.detail || "Ошибка изменения пароля", "error");
+          }
+        } catch (err) {
+          showToast("Ошибка соединения", "error");
+        }
+      }
+
+      // Delete user
+      async function deleteUser(id) {
+        if (!confirm("Удалить пользователя?")) return;
+        try {
+          const res = await authFetch(`${API_BASE}/api/users/${id}`, {
+            method: "DELETE",
+          });
+          if (res.ok) {
+            showToast("Пользователь удалён");
+            loadUsers();
+          } else {
+            const error = await res.json().catch(() => ({}));
+            showToast(error.detail || "Ошибка удаления", "error");
+          }
+        } catch (err) {
+          showToast("Ошибка соединения", "error");
+        }
+      }
+
+      // Initial load with auth check
+      async function init() {
+        const isAuthenticated = await checkAuth();
+        if (!isAuthenticated) return;
+        
+        loadStats();
+        loadProxies();
+        loadUrls();
+        loadNotificationSettings();
+        loadRecipients();
+        loadUsers();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
